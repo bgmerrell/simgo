@@ -1,11 +1,16 @@
 package simulago
 
-type Environment struct {
+// An environment is the execution environment for an event-based simulation.
+// The passing of time is simulated by stepping from event to event.
+type environment struct {
 	// Current time count
-	Now uint64
+	now uint64
 	// Event ID counter
-	EID uint64
+	eid uint64
 	// The list of all currently scheduled events
-	Queue []Event
+	queue eventQueue
 	// TODO: self._active_proc = None
+}
+
+func (env *environment) Step() {
 }
