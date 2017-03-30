@@ -1,8 +1,10 @@
 package simulago
 
+import "fmt"
+
 // An environment is the execution environment for an event-based simulation.
 // The passing of time is simulated by stepping from event to event.
-type environment struct {
+type Environment struct {
 	// Current time count
 	now uint64
 	// Event ID counter
@@ -12,5 +14,10 @@ type environment struct {
 	// TODO: self._active_proc = None
 }
 
-func (env *environment) Step() {
+func NewEnvironment() *Environment {
+	return new(Environment)
+}
+
+func (env *Environment) Step() {
+	fmt.Println("TODO: step")
 }
