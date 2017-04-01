@@ -4,15 +4,24 @@ package simulago
 // additional relevant metadata.
 type eventQueueItem struct {
 	// The event that is scheduled
-	*event
+	*Event
 	// The time the event is scheduled for
 	time uint64
 	// The priority of the scheduled event
 	priority int
 	// The incremental event ID
-	eid uint64
+	eid EventID
 	// The index in the event queue (used for performance gains)
 	idx int
+}
+
+func NewEventQueueItem(v *Event, time uint64, priority int, eid EventID) *eventQueueItem {
+	return &eventQueueItem{
+		Event:    v,
+		time:     time,
+		priority: priority,
+		eid:      eid,
+	}
 }
 
 // A eventQueue implements heap.Interface and holds ScheduledEvent objects.

@@ -58,7 +58,7 @@ func BenchmarkPopPush(b *testing.B) {
 		items[i] = &eventQueueItem{
 			time:     uint64(rand.Intn(maxTime)),
 			priority: rand.Intn(maxPriority),
-			eid:      uint64(i),
+			eid:      EventID(i),
 		}
 	}
 

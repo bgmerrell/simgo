@@ -1,11 +1,19 @@
 package simulago
 
-type eventCmd int
+const (
+	PriorityNormal int = iota
+	PriorityUrgent
+)
+
+type (
+	eventCmd     int
+	PriorityCode int
+)
 
 // PendingValue is a unique object for a pending Event value
 type PendingValue struct{}
 
-// An event is an event that may happen at some point in time.
+// An Event is an event that may happen at some point in time.
 //
 //    An event
 //
@@ -24,7 +32,7 @@ type PendingValue struct{}
 // processing with the value it has produced.
 //
 // TODO: Talk about how events are finalized/defused (?) after being processed.
-type event struct {
+type Event struct {
 	// The environment the event lives in
 	env *Environment
 	// List of functions that are called when the event is processed.
@@ -33,29 +41,35 @@ type event struct {
 
 // Timeout embeds an event and adds a delay
 type Timeout struct {
-	*event
+	*Event
 	delay uint64
+	value interface{}
 }
 
 // NewTimeout returns a new Timeout object given an environment, delay and an
-// event value.
+// Event value.
 func NewTimeout(env *Environment, delay uint64, value interface{}) Timeout {
 	return Timeout{
-		&event{env, nil},
+		&Event{env, nil},
 		delay,
+		value,
 	}
 }
 
-type Process struct {
-	*event
-	env *Environment
-	fn  func(*Environment)
+func (to *Timeout) Schedule(env *Environment) {
+	env.Schedule(to.Event, PriorityNormal, to.delay)
 }
 
-func NewProcess(env *Environment, fn func(*Environment)) *Process {
+type Process struct {
+	*Event
+	env *Environment
+	ch  chan struct{}
+}
+
+func NewProcess(env *Environment, ch chan struct{}) *Process {
 	return &Process{
-		&event{env, nil},
+		&Event{env, nil},
 		env,
-		fn,
+		ch,
 	}
 }
