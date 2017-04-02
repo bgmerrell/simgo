@@ -31,7 +31,12 @@ func (env *Environment) Step() {
 	item := env.queue.Pop().(*eventQueueItem)
 	env.now = item.time
 	fmt.Println("now:", env.now)
-	// TODO: iterate through event callbacks
+
+	// Process the event callbacks
+	fmt.Printf("Processing %d callback(s)...\n", len(item.callbacks))
+	for _, callback := range item.callbacks {
+		callback()
+	}
 }
 
 func (env *Environment) Schedule(v *Event, priority int, delay uint64) {

@@ -1,5 +1,11 @@
 package simulago
 
+import (
+	"fmt"
+
+	"github.com/bgmerrell/simulago/pcomm"
+)
+
 const (
 	PriorityNormal int = iota
 	PriorityUrgent
@@ -63,13 +69,24 @@ func (to *Timeout) Schedule(env *Environment) {
 type Process struct {
 	*Event
 	env *Environment
-	ch  chan struct{}
+	pc  *pcomm.PCommunicator
 }
 
-func NewProcess(env *Environment, ch chan struct{}) *Process {
+func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
 	return &Process{
 		&Event{env, nil},
 		env,
-		ch,
+		pc,
 	}
+}
+
+func (p *Process) Init() {
+	fmt.Println("Adding callback...")
+	p.Event.callbacks = append(p.Event.callbacks, p.resume)
+	p.env.Schedule(p.Event, PriorityUrgent, 0)
+}
+
+func (p *Process) resume(...interface{}) {
+	p.pc.Send(nil)
+	p.pc.Recv()
 }
