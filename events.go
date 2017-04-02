@@ -49,16 +49,14 @@ type Event struct {
 type Timeout struct {
 	*Event
 	delay uint64
-	value interface{}
 }
 
 // NewTimeout returns a new Timeout object given an environment, delay and an
 // Event value.
-func NewTimeout(env *Environment, delay uint64, value interface{}) Timeout {
+func NewTimeout(env *Environment, delay uint64) Timeout {
 	return Timeout{
-		&Event{env, nil},
+		&Event{env, make([]func(...interface{}), 0)},
 		delay,
-		value,
 	}
 }
 
@@ -74,7 +72,7 @@ type Process struct {
 
 func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
 	return &Process{
-		&Event{env, nil},
+		&Event{env, make([]func(...interface{}), 0)},
 		env,
 		pc,
 	}
@@ -87,6 +85,20 @@ func (p *Process) Init() {
 }
 
 func (p *Process) resume(...interface{}) {
-	p.pc.Send(nil)
-	p.pc.Recv()
+	for event := range p.pc.Ch {
+		fmt.Println("Ranging through channel")
+		if event != nil {
+			p.Event = event.(*Event)
+		}
+
+		if p.Event.callbacks != nil {
+			// The event has not yet been triggered. Register callback
+			// to resume the process if that happens.
+			fmt.Println("Adding callback from resume()...")
+			p.Event.callbacks = append(p.Event.callbacks, p.resume)
+			break
+		} else {
+			fmt.Println("callbacks was nil")
+		}
+	}
 }

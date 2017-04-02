@@ -26,15 +26,17 @@ func NewEnvironment() *Environment {
 }
 
 func (env *Environment) Step() {
-	// self._now, _, _, event = heappop(self._queue)
-	fmt.Println("Popping event...")
+	fmt.Println("Step() called...")
 	item := env.queue.Pop().(*eventQueueItem)
 	env.now = item.time
 	fmt.Println("now:", env.now)
 
 	// Process the event callbacks
 	fmt.Printf("Processing %d callback(s)...\n", len(item.callbacks))
-	for _, callback := range item.callbacks {
+	callbacks := make([]func(...interface{}), len(item.callbacks))
+	copy(callbacks, item.callbacks)
+	item.callbacks = nil
+	for _, callback := range callbacks {
 		callback()
 	}
 }

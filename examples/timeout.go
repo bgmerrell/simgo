@@ -33,12 +33,13 @@ now=2, value=42
 func example(env *simulago.Environment) *pcomm.PCommunicator {
 	pc := pcomm.New()
 	go func() {
+		pc.Send(nil)
 		for i := 0; i < 2; i++ {
-			pc.Recv()
-			to := simulago.NewTimeout(env, 10, 42)
+			to := simulago.NewTimeout(env, 10)
 			to.Schedule(env)
-			pc.Send(nil)
+			pc.Send(to.Event)
 		}
+		pc.Close()
 	}()
 	return pc
 }
@@ -50,9 +51,5 @@ func main() {
 	p.Init()
 	env.Step()
 	env.Step()
-	// TODO: Stepping still not working right.  The explicit send/recv
-	// below shouldn't be necessary
-	pc.Send(nil)
-	pc.Recv()
 	env.Step()
 }
