@@ -33,7 +33,7 @@ now=2, value=42
 func example(env *simulago.Environment) *pcomm.PCommunicator {
 	pc := pcomm.New()
 	go func() {
-		pc.Send(nil)
+		pc.Wait()
 		for i := 0; i < 2; i++ {
 			to := simulago.NewTimeout(env, 10)
 			to.Schedule(env)

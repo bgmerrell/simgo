@@ -87,7 +87,10 @@ func (p *Process) Init() {
 func (p *Process) resume(...interface{}) {
 	for event := range p.pc.Ch {
 		fmt.Println("Ranging through channel")
-		if event != nil {
+		if event == nil {
+			// The other end was just waiting, so continue on
+			continue
+		} else {
 			p.Event = event.(*Event)
 		}
 
@@ -97,8 +100,6 @@ func (p *Process) resume(...interface{}) {
 			fmt.Println("Adding callback from resume()...")
 			p.Event.callbacks = append(p.Event.callbacks, p.resume)
 			break
-		} else {
-			fmt.Println("callbacks was nil")
 		}
 	}
 }

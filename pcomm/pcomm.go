@@ -23,6 +23,10 @@ func (pc *PCommunicator) Send(x interface{}) {
 	pc.Ch <- x
 }
 
+func (pc *PCommunicator) Wait() {
+	pc.Ch <- nil
+}
+
 func (pc *PCommunicator) Close() {
 	close(pc.Ch)
 }
