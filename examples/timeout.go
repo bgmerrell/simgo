@@ -40,8 +40,7 @@ func example(env *simulago.Environment, pc *pcomm.PCommunicator) {
 
 func main() {
 	env := simulago.NewEnvironment()
-	pc := simulago.ProcWrapper(env, example)
-	p := simulago.NewProcess(env, pc)
+	p := simulago.NewProcess(env, simulago.ProcWrapper(env, example))
 	p.Init()
 	env.Step()
 	env.Step()
