@@ -92,8 +92,8 @@ func (p *Process) resume(...interface{}) {
 		}
 
 		if p.Event.callbacks != nil {
-			// The event has not yet been triggered. Register callback
-			// to resume the process if that happens.
+			// The event has not yet been triggered. Register
+			// callback to resume the process if that happens.
 			fmt.Println("Adding callback from resume()...")
 			p.Event.callbacks = append(p.Event.callbacks, p.resume)
 			break

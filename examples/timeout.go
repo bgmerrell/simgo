@@ -37,6 +37,7 @@ func example(env *simulago.Environment) *pcomm.PCommunicator {
 		for i := 0; i < 2; i++ {
 			to := simulago.NewTimeout(env, 10)
 			to.Schedule(env)
+			// TODO: Make this nicer
 			pc.Send(to.Event)
 		}
 		pc.Close()
