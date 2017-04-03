@@ -1,4 +1,4 @@
-package simulago
+package simgo
 
 import (
 	"container/heap"

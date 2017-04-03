@@ -1,9 +1,9 @@
-package simulago
+package simgo
 
 import (
 	"fmt"
 
-	"github.com/bgmerrell/simulago/pcomm"
+	"github.com/bgmerrell/simgo/pcomm"
 )
 
 const (

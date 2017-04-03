@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/bgmerrell/simulago"
-	"github.com/bgmerrell/simulago/pcomm"
+	"github.com/bgmerrell/simgo"
+	"github.com/bgmerrell/simgo/pcomm"
 )
 
 // simpy example:
@@ -30,17 +30,17 @@ now=1, value=42
 now=2, value=42
 */
 
-func example(env *simulago.Environment, pc *pcomm.PCommunicator) {
+func example(env *simgo.Environment, pc *pcomm.PCommunicator) {
 	for i := 0; i < 2; i++ {
-		to := simulago.NewTimeout(env, 10)
+		to := simgo.NewTimeout(env, 10)
 		to.Schedule(env)
 		pc.Send(to.Event)
 	}
 }
 
 func main() {
-	env := simulago.NewEnvironment()
-	p := simulago.NewProcess(env, simulago.ProcWrapper(env, example))
+	env := simgo.NewEnvironment()
+	p := simgo.NewProcess(env, simgo.ProcWrapper(env, example))
 	p.Init()
 	env.Step()
 	env.Step()

@@ -1,4 +1,4 @@
-package simulago
+package simgo
 
 // eventQueueItem is an event which has been schedule and thus has some
 // additional relevant metadata.
