@@ -103,3 +103,13 @@ func (p *Process) resume(...interface{}) {
 		}
 	}
 }
+
+func ProcWrapper(env *Environment, procFn func(*Environment, *pcomm.PCommunicator)) *pcomm.PCommunicator {
+	pc := pcomm.New()
+	go func() {
+		pc.Wait()
+		procFn(env, pc)
+		pc.Close()
+	}()
+	return pc
+}

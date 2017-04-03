@@ -30,24 +30,17 @@ now=1, value=42
 now=2, value=42
 */
 
-func example(env *simulago.Environment) *pcomm.PCommunicator {
-	pc := pcomm.New()
-	go func() {
-		pc.Wait()
-		for i := 0; i < 2; i++ {
-			to := simulago.NewTimeout(env, 10)
-			to.Schedule(env)
-			// TODO: Make this nicer
-			pc.Send(to.Event)
-		}
-		pc.Close()
-	}()
-	return pc
+func example(env *simulago.Environment, pc *pcomm.PCommunicator) {
+	for i := 0; i < 2; i++ {
+		to := simulago.NewTimeout(env, 10)
+		to.Schedule(env)
+		pc.Send(to.Event)
+	}
 }
 
 func main() {
 	env := simulago.NewEnvironment()
-	pc := example(env)
+	pc := simulago.ProcWrapper(env, example)
 	p := simulago.NewProcess(env, pc)
 	p.Init()
 	env.Step()
