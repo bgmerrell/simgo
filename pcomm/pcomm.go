@@ -1,4 +1,4 @@
-// Process communication
+// Package pcomm is for process communication with process functions.
 package pcomm
 
 import "fmt"
@@ -12,10 +12,6 @@ func New() *PCommunicator {
 	return &PCommunicator{
 		Ch: make(chan interface{}),
 	}
-}
-
-func (pc *PCommunicator) Recv() interface{} {
-	return <-pc.Ch
 }
 
 func (pc *PCommunicator) Send(x interface{}) {
