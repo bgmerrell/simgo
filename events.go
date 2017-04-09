@@ -16,8 +16,29 @@ type (
 	PriorityCode int
 )
 
-// PendingValue is a unique object for a pending Event value
-type PendingValue struct{}
+// EventValue holds the value state for an Event.  If the value is pending it
+// means that the event
+type EventValue struct {
+	val       interface{}
+	isPending bool
+}
+
+// NewEventValue returns a pending EventValue.
+func NewEventValue() *EventValue {
+	return &EventValue{nil, true}
+}
+
+// Set sets the underlying value (and sets isPending accordingly).
+func (ev *EventValue) Set(value interface{}) {
+	ev.val = value
+	ev.isPending = false
+}
+
+// Get returns the underlying event value along with a bool indicating whether
+// the value has been set (i.e., it is no longer pending).
+func (ev *EventValue) Get() (interface{}, bool) {
+	return ev.val, !ev.isPending
+}
 
 // An Event is an event that may happen at some point in time.
 //
@@ -43,6 +64,17 @@ type Event struct {
 	env *Environment
 	// List of functions that are called when the event is processed.
 	callbacks []func(...interface{})
+	// Value holds the event's value
+	Value *EventValue
+}
+
+// NewEvent returns a new Event object with default values.
+func NewEvent(env *Environment) *Event {
+	return &Event{
+		env,
+		make([]func(...interface{}), 0),
+		NewEventValue(),
+	}
 }
 
 // Timeout embeds an event and adds a delay
@@ -52,10 +84,15 @@ type Timeout struct {
 }
 
 // NewTimeout returns a new Timeout object given an environment, delay and an
-// Event value.
-func NewTimeout(env *Environment, delay uint64) Timeout {
+// Event value.  The event is automatically triggered when this function is
+// called.
+func NewTimeout(env *Environment, delay uint64, value interface{}) Timeout {
 	return Timeout{
-		&Event{env, make([]func(...interface{}), 0)},
+		&Event{
+			env,
+			make([]func(...interface{}), 0),
+			&EventValue{value, false},
+		},
 		delay,
 	}
 }
@@ -72,15 +109,18 @@ type Process struct {
 
 func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
 	return &Process{
-		&Event{env, make([]func(...interface{}), 0)},
+		NewEvent(env),
 		env,
 		pc,
 	}
 }
 
+// Init initializes the process.  The event is automatically triggered and
+// scheduled.
 func (p *Process) Init() {
 	fmt.Println("Adding callback...")
 	p.Event.callbacks = append(p.Event.callbacks, p.resume)
+	p.Event.Value.Set(nil)
 	p.env.Schedule(p.Event, PriorityUrgent, 0)
 }
 

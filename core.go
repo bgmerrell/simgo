@@ -13,7 +13,7 @@ func (eid *EventID) Next() EventID {
 // The passing of time is simulated by stepping from event to event.
 type Environment struct {
 	// Current time count
-	now uint64
+	Now uint64
 	// Event ID counter
 	eid EventID
 	// The list of all currently scheduled events
@@ -28,8 +28,8 @@ func NewEnvironment() *Environment {
 func (env *Environment) Step() {
 	fmt.Println("Step() called...")
 	item := env.queue.Pop().(*eventQueueItem)
-	env.now = item.time
-	fmt.Println("now:", env.now)
+	env.Now = item.time
+	fmt.Println("Now:", env.Now)
 
 	// Process the event callbacks
 	fmt.Printf("Processing %d callback(s)...\n", len(item.callbacks))
@@ -43,5 +43,5 @@ func (env *Environment) Step() {
 
 func (env *Environment) Schedule(v *Event, priority int, delay uint64) {
 	fmt.Println("Pushing event...")
-	env.queue.Push(NewEventQueueItem(v, env.now+delay, priority, env.eid.Next()))
+	env.queue.Push(NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
 }

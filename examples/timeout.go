@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/bgmerrell/simgo"
 	"github.com/bgmerrell/simgo/pcomm"
 )
@@ -32,9 +34,11 @@ now=2, value=42
 
 func example(env *simgo.Environment, pc *pcomm.PCommunicator) {
 	for i := 0; i < 2; i++ {
-		to := simgo.NewTimeout(env, 10)
+		to := simgo.NewTimeout(env, 1, 42)
 		to.Schedule(env)
 		pc.Send(to.Event)
+		val, _ := to.Event.Value.Get()
+		fmt.Printf("now=%d, value=%d\n", env.Now, val)
 	}
 }
 
