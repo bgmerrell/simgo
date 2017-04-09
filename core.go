@@ -31,24 +31,6 @@ func NewEnvironment() *Environment {
 	return new(Environment)
 }
 
-/*
-def run(self, until=None):
-        """Executes :meth:`step()` until the given criterion *until* is met.
-
-        - If it is ``None`` (which is the default), this method will return
-          when there are no further events to be processed.
-
-        - If it is an :class:`~simpy.events.Event`, the method will continue
-          stepping until this event has been triggered and will return its
-          value.  Raises a :exc:`RuntimeError` if there are no further events
-          to be processed and the *until* event was not triggered.
-
-        - If it is a number, the method will continue stepping
-          until the environment's time reaches *until*.
-
-        """
-*/
-
 // Run executes Step() until a condition below is met for the provided "until"
 // value:
 //
