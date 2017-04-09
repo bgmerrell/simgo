@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bgmerrell/simgo/pcomm"
+	"github.com/juju/errgo"
 )
 
 const (
@@ -34,10 +35,14 @@ func (ev *EventValue) Set(value interface{}) {
 	ev.isPending = false
 }
 
-// Get returns the underlying event value along with a bool indicating whether
-// the value has been set (i.e., it is no longer pending).
-func (ev *EventValue) Get() (interface{}, bool) {
-	return ev.val, !ev.isPending
+// Get returns the underlying event value along with an error if the value is
+// still pending.
+func (ev *EventValue) Get() (interface{}, error) {
+	var err error
+	if ev.isPending {
+		err = errgo.New("event value is still pending")
+	}
+	return ev.val, err
 }
 
 // An Event is an event that may happen at some point in time.
