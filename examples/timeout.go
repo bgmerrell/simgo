@@ -34,16 +34,14 @@ now=30, value=42
 */
 
 func example(env *simgo.Environment, pc *pcomm.PCommunicator) {
+	fmt.Println("In example()")
 	for i := 0; i < 3; i++ {
 		to := simgo.NewTimeout(env, 10, 40+i)
 		to.Schedule(env)
-		pc.Send(to.Event)
-		// BUG: Send() doesn't block here, so print statement below
-		// can print env.Now value before it's updated.
-		//time.Sleep(100 * time.Millisecond) // DELETE ME
-		val, _ := to.Event.Value.Get()
+		val := pc.Yield(to.Event)
 		fmt.Printf("now=%d, value=%d\n", env.Now, val)
 	}
+	fmt.Println("Done with example()")
 }
 
 func main() {

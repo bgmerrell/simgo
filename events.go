@@ -68,7 +68,7 @@ type Event struct {
 	// The environment the event lives in
 	env *Environment
 	// List of functions that are called when the event is processed.
-	callbacks []func(...interface{})
+	callbacks []func(*Event)
 	// Value holds the event's value
 	Value *EventValue
 }
@@ -77,7 +77,7 @@ type Event struct {
 func NewEvent(env *Environment) *Event {
 	return &Event{
 		env,
-		make([]func(...interface{}), 0),
+		make([]func(*Event), 0),
 		NewEventValue(),
 	}
 }
@@ -95,7 +95,7 @@ func NewTimeout(env *Environment, delay uint64, value interface{}) Timeout {
 	return Timeout{
 		&Event{
 			env,
-			make([]func(...interface{}), 0),
+			make([]func(*Event), 0),
 			&EventValue{value, false},
 		},
 		delay,
@@ -129,14 +129,19 @@ func (p *Process) Init() {
 	p.env.Schedule(p.Event, PriorityUrgent, 0)
 }
 
-func (p *Process) resume(...interface{}) {
-	for event := range p.pc.Ch {
-		fmt.Println("Ranging through channel")
-		if event == nil {
+func (p *Process) resume(event *Event) {
+	fmt.Println("in resume")
+	for {
+		// event value is already triggered, no need to check err
+		eventVal, _ := event.Value.Get()
+		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
+			fmt.Println("proc finished...")
+			break
+		} else if nextEvent == nil {
 			// The other end was just waiting, so continue on
-			continue
+			fmt.Println("Continuing...")
 		} else {
-			p.Event = event.(*Event)
+			p.Event = nextEvent.(*Event)
 		}
 
 		if p.Event.callbacks != nil {
@@ -144,7 +149,7 @@ func (p *Process) resume(...interface{}) {
 			// callback to resume the process if that happens.
 			fmt.Println("Adding callback from resume()...")
 			p.Event.callbacks = append(p.Event.callbacks, p.resume)
-			break
+			return
 		}
 	}
 }
@@ -152,9 +157,9 @@ func (p *Process) resume(...interface{}) {
 func ProcWrapper(env *Environment, procFn func(*Environment, *pcomm.PCommunicator)) *pcomm.PCommunicator {
 	pc := pcomm.New()
 	go func() {
-		pc.Wait()
+		pc.Yield(nil)
 		procFn(env, pc)
-		pc.Close()
+		pc.Finish()
 	}()
 	return pc
 }

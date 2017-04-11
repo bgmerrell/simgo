@@ -90,11 +90,11 @@ func (env *Environment) Step() {
 
 	// Process the event callbacks
 	fmt.Printf("Processing %d callback(s)...\n", len(item.callbacks))
-	callbacks := make([]func(...interface{}), len(item.callbacks))
+	callbacks := make([]func(*Event), len(item.callbacks))
 	copy(callbacks, item.callbacks)
 	item.callbacks = nil
 	for _, callback := range callbacks {
-		callback()
+		callback(item.Event)
 	}
 }
 
@@ -103,6 +103,6 @@ func (env *Environment) Schedule(v *Event, priority int, delay uint64) {
 	env.queue.Push(NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
 }
 
-func (env *Environment) stopSimulation(...interface{}) {
+func (env *Environment) stopSimulation(_ *Event) {
 	env.shouldStop = true
 }
