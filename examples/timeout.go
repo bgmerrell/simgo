@@ -48,14 +48,8 @@ func main() {
 	env := simgo.NewEnvironment()
 	p := simgo.NewProcess(env, simgo.ProcWrapper(env, example))
 	p.Init()
-	/*
-		_, err := env.Run(nil)
-		if err != nil {
-			fmt.Print("Error: ", err)
-		}
-	*/
-	env.Step()
-	env.Step()
-	env.Step()
-	env.Step()
+	_, err := env.Run(nil)
+	if err != nil {
+		fmt.Print("Error: ", err)
+	}
 }

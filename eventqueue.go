@@ -61,6 +61,9 @@ func (eq *eventQueue) Push(x interface{}) {
 }
 
 func (eq *eventQueue) Pop() interface{} {
+	if len(*eq) <= 0 {
+		return nil
+	}
 	old := *eq
 	n := len(old)
 	eventQueueItem := old[n-1]

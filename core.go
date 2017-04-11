@@ -79,22 +79,37 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 	for !env.shouldStop {
 		env.Step()
 	}
-	return untilEvent.Value.Get()
+	if untilEvent != nil {
+		return untilEvent.Value.Get()
+	}
+	return nil, nil
 }
 
 func (env *Environment) Step() {
 	fmt.Println("Step() called...")
-	item := env.queue.Pop().(*eventQueueItem)
-	env.Now = item.time
+	var eqItem *eventQueueItem
+	switch item := env.queue.Pop().(type) {
+	case nil:
+		// We're out of event queue items
+		fmt.Println("Empty event queue, let's stop")
+		env.shouldStop = true
+		return
+	case *eventQueueItem:
+		eqItem = item
+	default:
+		// Should never happen
+		panic("Unknown type from event queue")
+	}
+	env.Now = eqItem.time
 	fmt.Println("Now:", env.Now)
 
 	// Process the event callbacks
-	fmt.Printf("Processing %d callback(s)...\n", len(item.callbacks))
-	callbacks := make([]func(*Event), len(item.callbacks))
-	copy(callbacks, item.callbacks)
-	item.callbacks = nil
+	fmt.Printf("Processing %d callback(s)...\n", len(eqItem.callbacks))
+	callbacks := make([]func(*Event), len(eqItem.callbacks))
+	copy(callbacks, eqItem.callbacks)
+	eqItem.callbacks = nil
 	for _, callback := range callbacks {
-		callback(item.Event)
+		callback(eqItem.Event)
 	}
 }
 
