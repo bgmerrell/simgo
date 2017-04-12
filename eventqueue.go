@@ -1,6 +1,8 @@
 package simgo
 
-import "container/heap"
+import (
+	"container/heap"
+)
 
 // eventQueue implements the heap.Interface interface by way of the following
 // methods: Len(), Less(), Swap(), Push(), Pop().
@@ -60,6 +62,9 @@ func (eq eventQueue) Less(i, j int) bool {
 
 // Swap swaps the events at the given indexes.
 func (eq eventQueue) Swap(i, j int) {
+	if len(eq) <= 0 {
+		return
+	}
 	eq[i], eq[j] = eq[j], eq[i]
 	eq[i].idx = i
 	eq[j].idx = j

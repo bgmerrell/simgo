@@ -1,6 +1,7 @@
 package simgo
 
 import (
+	"container/heap"
 	"fmt"
 
 	"github.com/juju/errgo"
@@ -95,7 +96,7 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 func (env *Environment) Step() {
 	fmt.Println("Step() called...")
 	var eqItem *eventQueueItem
-	switch item := env.queue.Pop().(type) {
+	switch item := heap.Pop(&env.queue).(type) {
 	case nil:
 		// We're out of event queue items
 		fmt.Println("Empty event queue, let's stop")
@@ -124,7 +125,7 @@ func (env *Environment) Step() {
 // and delay for the event is also provided.
 func (env *Environment) Schedule(v *Event, priority int, delay uint64) {
 	fmt.Println("Pushing event...")
-	env.queue.Push(NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
+	heap.Push(&env.queue, NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
 }
 
 // stopSimulation is a special callback that tells the Environment that it's
