@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bgmerrell/simgo/pcomm"
+
 	"github.com/juju/errgo"
 )
 
@@ -137,9 +138,6 @@ func (p *Process) resume(event *Event) {
 		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
 			fmt.Println("proc finished...")
 			break
-		} else if nextEvent == nil {
-			// The other end was just waiting, so continue on
-			fmt.Println("Continuing...")
 		} else {
 			p.Event = nextEvent.(*Event)
 		}
