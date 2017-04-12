@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/bgmerrell/simgo"
-	"github.com/bgmerrell/simgo/pcomm"
 )
 
 // simpy example:
@@ -31,7 +30,7 @@ now=20, value=41
 now=30, value=42
 */
 
-func example(env *simgo.Environment, pc *pcomm.PCommunicator) {
+func example(env *simgo.Environment, pc *simgo.ProcComm) {
 	for i := 0; i < 3; i++ {
 		to := simgo.NewTimeout(env, 10, 40+i)
 		to.Schedule(env)

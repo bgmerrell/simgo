@@ -3,8 +3,6 @@ package simgo
 import (
 	"fmt"
 
-	"github.com/bgmerrell/simgo/pcomm"
-
 	"github.com/juju/errgo"
 )
 
@@ -107,19 +105,19 @@ func (to *Timeout) Schedule(env *Environment) {
 // A Process processes an event yielding process function.
 //
 // A user implements a process function which is a coroutine function that can
-// suspend its execution by yielding an event (using pcomm.Yield()). Process
-// will take care of resuming the process function with the value of that event
-// once it has happened.
+// suspend its execution by yielding an event (using ProcComm.Yield()).
+// Process will take care of resuming the process function with the value of
+// that event once it has happened.
 type Process struct {
 	*Event
 	env *Environment
-	pc  *pcomm.PCommunicator
+	pc  *ProcComm
 }
 
-// NewProcess returns a new Process given an Environment and a PCommunicator
+// NewProcess returns a new Process given an Environment and a ProcComm
 // (which is used to communicate between the process function coroutine and the
 // Process).
-func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
+func NewProcess(env *Environment, pc *ProcComm) *Process {
 	return &Process{
 		NewEvent(env),
 		env,
@@ -161,12 +159,13 @@ func (p *Process) resume(event *Event) {
 }
 
 // ProcWrapper is function that turns a user process function into a coroutine
-// that can suspend its execution by yielding an event (using pcomm.Yield()).
+// that can suspend its execution by yielding an event (using
+// ProcComm.Yield()).
 //
 // See the examples directory for example usage.
 //
-func ProcWrapper(env *Environment, procFn func(*Environment, *pcomm.PCommunicator)) *pcomm.PCommunicator {
-	pc := pcomm.New()
+func ProcWrapper(env *Environment, procFn func(*Environment, *ProcComm)) *ProcComm {
+	pc := NewProcComm()
 	go func() {
 		// An initial yield imitates coroutine behavior of not
 		// executing the coroutine body upon creation.
