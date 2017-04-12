@@ -6,8 +6,10 @@ import (
 	"github.com/juju/errgo"
 )
 
+// An EventID is a unique numerical ID for each event.
 type EventID uint64
 
+// Next returns the next sequential event ID.
 func (eid *EventID) Next() EventID {
 	(*eid)++
 	return *eid
@@ -27,6 +29,7 @@ type Environment struct {
 	shouldStop bool
 }
 
+// NewEnvironment returns an Environment with default values.
 func NewEnvironment() *Environment {
 	return new(Environment)
 }
@@ -61,12 +64,15 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 			}
 		case int, uint64:
 			if intAt, ok := until.(int); ok {
+				if intAt < 0 {
+					return nil, errgo.Newf(`"until" value (%d) must be positive`, intAt)
+				}
 				at = uint64(intAt)
 			} else {
 				at, _ = until.(uint64)
 			}
 			if at <= env.Now {
-				return nil, errgo.Newf(`"until" value (%d) should be greater than the current simulation time (%d)`, at, env.Now)
+				return nil, errgo.Newf(`"until" value (%d) must be greater than the current simulation time (%d)`, at, env.Now)
 			}
 			untilEvent = NewEvent(env)
 			untilEvent.Value.Set(nil)
@@ -85,6 +91,7 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 	return nil, nil
 }
 
+// Step processes the next event.
 func (env *Environment) Step() {
 	fmt.Println("Step() called...")
 	var eqItem *eventQueueItem
@@ -113,11 +120,15 @@ func (env *Environment) Step() {
 	}
 }
 
+// Schedule adds the provided Event to the event priority queue.  A priority
+// and delay for the event is also provided.
 func (env *Environment) Schedule(v *Event, priority int, delay uint64) {
 	fmt.Println("Pushing event...")
 	env.queue.Push(NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
 }
 
+// stopSimulation is a special callback that tells the Environment that it's
+// time to stop the simulation.
 func (env *Environment) stopSimulation(_ *Event) {
 	env.shouldStop = true
 }

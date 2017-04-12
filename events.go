@@ -9,13 +9,9 @@ import (
 )
 
 const (
-	PriorityNormal int = iota
+	// Built-in event priorities
+	PriorityNormal = iota
 	PriorityUrgent
-)
-
-type (
-	eventCmd     int
-	PriorityCode int
 )
 
 // EventValue holds the value state for an Event.  If the value is pending it
@@ -103,16 +99,26 @@ func NewTimeout(env *Environment, delay uint64, value interface{}) Timeout {
 	}
 }
 
+// Schedule schedules the timeout event for the provided environment.
 func (to *Timeout) Schedule(env *Environment) {
 	env.Schedule(to.Event, PriorityNormal, to.delay)
 }
 
+// A Process processes an event yielding process function.
+//
+// A user implements a process function which is a coroutine function that can
+// suspend its execution by yielding an event (using pcomm.Yield()). Process
+// will take care of resuming the process function with the value of that event
+// once it has happened.
 type Process struct {
 	*Event
 	env *Environment
 	pc  *pcomm.PCommunicator
 }
 
+// NewProcess returns a new Process given an Environment and a PCommunicator
+// (which is used to communicate between the process function coroutine and the
+// Process).
 func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
 	return &Process{
 		NewEvent(env),
@@ -121,8 +127,8 @@ func NewProcess(env *Environment, pc *pcomm.PCommunicator) *Process {
 	}
 }
 
-// Init initializes the process.  The event is automatically triggered and
-// scheduled.
+// Init initializes the process.  The process's Event is automatically
+// triggered and scheduled.
 func (p *Process) Init() {
 	fmt.Println("Adding callback...")
 	p.Event.callbacks = append(p.Event.callbacks, p.resume)
@@ -130,6 +136,8 @@ func (p *Process) Init() {
 	p.env.Schedule(p.Event, PriorityUrgent, 0)
 }
 
+// resume takes care of resuming the process function with the value of the
+// provided Event.
 func (p *Process) resume(event *Event) {
 	fmt.Println("in resume")
 	for {
@@ -152,9 +160,16 @@ func (p *Process) resume(event *Event) {
 	}
 }
 
+// ProcWrapper is function that turns a user process function into a coroutine
+// that can suspend its execution by yielding an event (using pcomm.Yield()).
+//
+// See the examples directory for example usage.
+//
 func ProcWrapper(env *Environment, procFn func(*Environment, *pcomm.PCommunicator)) *pcomm.PCommunicator {
 	pc := pcomm.New()
 	go func() {
+		// An initial yield imitates coroutine behavior of not
+		// executing the coroutine body upon creation.
 		pc.Yield(nil)
 		procFn(env, pc)
 		pc.Finish()

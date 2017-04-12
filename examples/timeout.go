@@ -13,7 +13,7 @@ import simpy
 
 def example(env):
     for i in range(3):
-        event = simpy.events.Timeout(env, delay=10, value=40+1)
+        event = simpy.events.Timeout(env, delay=10, value=40+i)
         value = yield event
         print('now=%d, value=%d' % (env.now, value))
 
@@ -21,9 +21,7 @@ env = simpy.Environment()
 example_gen = example(env)
 _ = simpy.events.Process(env, example_gen)
 
-env.step()
-env.step()
-env.step()
+env.run()
 */
 
 // Output:
@@ -34,14 +32,12 @@ now=30, value=42
 */
 
 func example(env *simgo.Environment, pc *pcomm.PCommunicator) {
-	fmt.Println("In example()")
 	for i := 0; i < 3; i++ {
 		to := simgo.NewTimeout(env, 10, 40+i)
 		to.Schedule(env)
 		val := pc.Yield(to.Event)
 		fmt.Printf("now=%d, value=%d\n", env.Now, val)
 	}
-	fmt.Println("Done with example()")
 }
 
 func main() {
@@ -50,6 +46,6 @@ func main() {
 	p.Init()
 	_, err := env.Run(nil)
 	if err != nil {
-		fmt.Print("Error: ", err)
+		fmt.Println("Error: ", err)
 	}
 }
