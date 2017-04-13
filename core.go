@@ -81,7 +81,9 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 			env.Schedule(untilEvent, PriorityUrgent, at-env.Now)
 
 		}
+		fmt.Println("Setting stopSimulation callback")
 		untilEvent.callbacks = append(untilEvent.callbacks, env.stopSimulation)
+		fmt.Printf("untilEvent: %p\n", untilEvent)
 	}
 	for !env.shouldStop {
 		env.Step()
@@ -104,6 +106,7 @@ func (env *Environment) Step() {
 		return
 	case *eventQueueItem:
 		eqItem = item
+		fmt.Printf("eqItem event: %p\n", eqItem.Event)
 	default:
 		// Should never happen
 		panic("Unknown type from event queue")
@@ -124,12 +127,13 @@ func (env *Environment) Step() {
 // Schedule adds the provided Event to the event priority queue.  A priority
 // and delay for the event is also provided.
 func (env *Environment) Schedule(v *Event, priority int, delay uint64) {
-	fmt.Println("Pushing event...")
+	fmt.Printf("Pushing event %p\n", v)
 	heap.Push(&env.queue, NewEventQueueItem(v, env.Now+delay, priority, env.eid.Next()))
 }
 
 // stopSimulation is a special callback that tells the Environment that it's
 // time to stop the simulation.
 func (env *Environment) stopSimulation(_ *Event) {
+	fmt.Println("Setting shouldStop = true")
 	env.shouldStop = true
 }

@@ -128,10 +128,11 @@ func NewProcess(env *Environment, pc *ProcComm) *Process {
 // Init initializes the process.  The process's Event is automatically
 // triggered and scheduled.
 func (p *Process) Init() {
-	fmt.Println("Adding callback...")
-	p.Event.callbacks = append(p.Event.callbacks, p.resume)
-	p.Event.Value.Set(nil)
-	p.env.Schedule(p.Event, PriorityUrgent, 0)
+	initEvent := NewEvent(p.env)
+	fmt.Println("Adding initEvent callback...")
+	initEvent.callbacks = append(initEvent.callbacks, p.resume)
+	initEvent.Value.Set(nil)
+	p.env.Schedule(initEvent, PriorityUrgent, 0)
 }
 
 // resume takes care of resuming the process function with the value of the
@@ -143,16 +144,17 @@ func (p *Process) resume(event *Event) {
 		eventVal, _ := event.Value.Get()
 		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
 			fmt.Println("proc finished...")
+			p.env.Schedule(p.Event, PriorityNormal, 0)
 			break
 		} else {
-			p.Event = nextEvent.(*Event)
+			event = nextEvent.(*Event)
 		}
 
-		if p.Event.callbacks != nil {
+		if event.callbacks != nil {
 			// The event has not yet been triggered. Register
 			// callback to resume the process if that happens.
 			fmt.Println("Adding callback from resume()...")
-			p.Event.callbacks = append(p.Event.callbacks, p.resume)
+			event.callbacks = append(event.callbacks, p.resume)
 			return
 		}
 	}
