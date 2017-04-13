@@ -144,6 +144,11 @@ func (p *Process) resume(event *Event) {
 		eventVal, _ := event.Value.Get()
 		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
 			fmt.Println("proc finished...")
+			// Set the process value to nil if it hasn't been set
+			// already.
+			if p.Event.Value.isPending {
+				p.Event.Value.Set(nil)
+			}
 			p.env.Schedule(p.Event, PriorityNormal, 0)
 			break
 		} else {
