@@ -8,8 +8,8 @@ import (
 
 const (
 	// Built-in event priorities
-	PriorityNormal = iota
-	PriorityUrgent
+	PriorityUrgent = iota
+	PriorityNormal
 )
 
 // EventValue holds the value state for an Event.  If the value is pending it
