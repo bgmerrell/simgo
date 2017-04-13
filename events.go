@@ -147,7 +147,7 @@ func (p *Process) resume(event *Event) {
 			p.env.Schedule(p.Event, PriorityNormal, 0)
 			break
 		} else {
-			event = nextEvent.(*Event)
+			event = nextEvent
 		}
 
 		if event.callbacks != nil {
