@@ -20,6 +20,8 @@ type ProcComm struct {
 	// state is the current state of the coroutine (i.e., running vs.
 	// suspended).
 	state coroutineState
+	// returnValue is the value returned by the coroutine
+	returnValue interface{}
 }
 
 // NewProcComm returns a new ProcComm with initialized channels and suspended
@@ -60,6 +62,7 @@ func (pc *ProcComm) Resume(x interface{}) (*Event, bool) {
 }
 
 // Finish finalizes the underlying channels such that the process can finish.
-func (pc *ProcComm) Finish() {
+func (pc *ProcComm) Finish(x interface{}) {
 	close(pc.yieldCh)
+	pc.returnValue = x
 }

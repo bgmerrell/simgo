@@ -168,20 +168,24 @@ func (p *Process) resume(event *Event) {
 	}
 }
 
+// ReturnValue returns the value returned by the process function.
+func (p *Process) ReturnValue() interface{} {
+	return p.pc.returnValue
+}
+
 // ProcWrapper is function that turns a user process function into a coroutine
 // that can suspend its execution by yielding an event (using
 // ProcComm.Yield()).
 //
 // See the examples directory for example usage.
 //
-func ProcWrapper(env *Environment, procFn func(*Environment, *ProcComm)) *ProcComm {
+func ProcWrapper(env *Environment, procFn func(*Environment, *ProcComm) interface{}) *ProcComm {
 	pc := NewProcComm()
 	go func() {
 		// An initial yield imitates coroutine behavior of not
 		// executing the coroutine body upon creation.
 		pc.Yield(nil)
-		procFn(env, pc)
-		pc.Finish()
+		pc.Finish(procFn(env, pc))
 	}()
 	return pc
 }
