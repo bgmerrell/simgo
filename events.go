@@ -138,7 +138,10 @@ func (p *Process) Init() {
 // resume takes care of resuming the process function with the value of the
 // provided Event.
 func (p *Process) resume(event *Event) {
-	fmt.Println("in resume")
+	p.env.ActiveProcess = p
+	defer func() {
+		p.env.ActiveProcess = nil
+	}()
 	for {
 		// event value is already triggered, no need to check err
 		eventVal, _ := event.Value.Get()

@@ -21,11 +21,12 @@ func (eid *EventID) Next() EventID {
 type Environment struct {
 	// Current time count
 	Now uint64
+	// ActiveProcess is the currently active process
+	ActiveProcess *Process
 	// Event ID counter
 	eid EventID
 	// The list of all currently scheduled events
 	queue eventQueue
-	// TODO: self._active_proc = None
 	// shouldStop tells the Environment when it's time to stop running
 	shouldStop bool
 }
