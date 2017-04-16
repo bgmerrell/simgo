@@ -1,8 +1,6 @@
 package simgo
 
 import (
-	"fmt"
-
 	"github.com/juju/errgo"
 )
 
@@ -77,6 +75,18 @@ func NewEvent(env *Environment) *Event {
 	}
 }
 
+// Succeeds sets the event's value, marks it as successful and schedules it for
+// processing by the environment. Returns the event instance along with any
+// errors.
+func (e *Event) Succeed(val interface{}) (*Event, error) {
+	if !e.Value.isPending {
+		return e, errgo.Newf("%s has already been triggered", e)
+	}
+	e.Value.Set(val)
+	e.env.Schedule(e, PriorityNormal, 0)
+	return e, nil
+}
+
 // Timeout embeds an event and adds a delay
 type Timeout struct {
 	*Event
@@ -129,7 +139,6 @@ func NewProcess(env *Environment, pc *ProcComm) *Process {
 // triggered and scheduled.
 func (p *Process) Init() {
 	initEvent := NewEvent(p.env)
-	fmt.Println("Adding initEvent callback...")
 	initEvent.callbacks = append(initEvent.callbacks, p.resume)
 	initEvent.Value.Set(nil)
 	p.env.Schedule(initEvent, PriorityUrgent, 0)
@@ -146,7 +155,6 @@ func (p *Process) resume(event *Event) {
 		// event value is already triggered, no need to check err
 		eventVal, _ := event.Value.Get()
 		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
-			fmt.Println("proc finished...")
 			// Set the process value to nil if it hasn't been set
 			// already.
 			if p.Event.Value.isPending {
@@ -161,7 +169,6 @@ func (p *Process) resume(event *Event) {
 		if event.callbacks != nil {
 			// The event has not yet been triggered. Register
 			// callback to resume the process if that happens.
-			fmt.Println("Adding callback from resume()...")
 			event.callbacks = append(event.callbacks, p.resume)
 			return
 		}

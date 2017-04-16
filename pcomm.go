@@ -1,7 +1,5 @@
 package simgo
 
-import "fmt"
-
 // coroutineState represents the state of the coroutine
 type coroutineState int
 
@@ -39,7 +37,6 @@ func NewProcComm() *ProcComm {
 // such that it can be read from Resume().  Yield() communicates over
 // unbuffered channels and may block accordingly.
 func (pc *ProcComm) Yield(event *Event) interface{} {
-	fmt.Println("Yielding...")
 	if pc.state == stateRunning {
 		pc.state = stateSuspended
 		pc.yieldCh <- event
@@ -55,7 +52,6 @@ func (pc *ProcComm) Yield(event *Event) interface{} {
 // was received from a valid, open channel.  Resume() communicates over
 // unbuffered channels and may block accordingly.
 func (pc *ProcComm) Resume(x interface{}) (*Event, bool) {
-	fmt.Println("Resuming...")
 	pc.resumeCh <- x
 	yieldedVal, ok := <-pc.yieldCh
 	return yieldedVal, ok
