@@ -10,6 +10,13 @@ const (
 	PriorityNormal
 )
 
+// conditionEvaluateFn is the evaluate function signature used for conditions
+type conditionEvaluateFn func(events []*Event, count int) bool
+
+// TODO: Move EventValue to its own package or refactor.  Currently, it's too
+// easy to use the struct fields directly when the methods should really be
+// the only things used.
+
 // EventValue holds the value state for an Event.  If the value is pending it
 // means that the event
 type EventValue struct {
@@ -85,6 +92,34 @@ func (e *Event) Succeed(val interface{}) (*Event, error) {
 	e.Value.Set(val)
 	e.env.Schedule(e, PriorityNormal, 0)
 	return e, nil
+}
+
+// Fail sets the provided EventValue as the events value, marks the event as
+// failed, and schedules it for processing by the environment.  The event
+// instance is returned along with any errors.
+func (e *Event) Fail(eventValue *EventValue) (*Event, error) {
+	if !e.Value.isPending {
+		return nil, errgo.Newf("%s has already been triggered", e)
+	}
+
+	errVal, err := eventValue.Get()
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := errVal.(error); ok {
+		e.Value.Set(errVal)
+	} else {
+		return nil, errgo.Newf("%#v is not an error", errVal)
+	}
+	e.env.Schedule(e, PriorityNormal, 0)
+	return e, nil
+}
+
+// isOK returns whether the event is OK, which means that the EventValue is
+// not an error.
+func (e *Event) isOK() bool {
+	_, isErr := e.Value.val.(error)
+	return !isErr
 }
 
 // Timeout embeds an event and adds a delay
@@ -195,4 +230,98 @@ func ProcWrapper(env *Environment, procFn func(*Environment, *ProcComm) interfac
 		pc.Finish(procFn(env, pc))
 	}()
 	return pc
+}
+
+// A Condition embeds an event that gets triggered once the "evaluate"
+// condition function returns true on the list of events.
+//
+// The value of the condition event is an instance of ConditionValue which
+// allows convenient access to the input events and their values. The
+// ConditionValue will only contain entries for those events that occurred
+// before the condition is processed.
+//
+// If one of the events fails, the condition also fails and... TODO: does what?
+//
+// The evaluate function receives the list of target events and the number
+// of processed events in this list: evaluate(events, processedCount). If it
+// returns true, the condition is triggered.
+//
+// Condition events can be nested.
+type Condition struct {
+	*Event
+	evaluateFn conditionEvaluateFn
+	events     []*Event
+	count      int
+}
+
+func NewCondition(env *Environment, evaluateFn conditionEvaluateFn, events []*Event) *Condition {
+	c := &Condition{
+		NewEvent(env),
+		evaluateFn,
+		make([]*Event, 0),
+		0,
+	}
+
+	if len(c.events) == 0 {
+		// Immediately succeed if no events are provided
+		c.Event.Succeed(nil)
+		return c
+	}
+
+	// TODO: Simpy has a check that all events are in the same environment.
+	// Do we need one?
+
+	// Check if the condition is met for each processed event.  Attach
+	// check() as a callback otherwise.
+	for _, event := range c.events {
+		event.callbacks = append(event.callbacks, c.check)
+	}
+	c.Event.callbacks = append(c.Event.callbacks, c.buildValue)
+
+	return c
+}
+
+// check checks if the condition was already met and schedules the event if
+// it was.
+func (c *Condition) check(event *Event) {
+	if !c.Event.Value.isPending {
+		return
+	}
+
+	c.count++
+
+	if !c.Event.isOK() {
+		// TODO: Use "Defused?"
+		// c.Event.Defused = true
+		c.Event.Fail(c.Event.Value)
+	} else if c.evaluateFn(c.events, c.count) {
+		c.Event.Succeed(nil)
+	}
+}
+
+func (c *Condition) buildValue(event *Event) {
+	c.removeCheckCallbacks()
+	if c.Event.isOK() {
+		// TODO: Set and populate the event value to a ConditionValue
+		// simpy:
+		//   self._value = ConditionValue()
+		//   self._populate_value(self._value)
+	}
+}
+
+// removeCheckCallbacks removes check() callbacks from events recursively.
+//
+// Once the condition has triggered, the condition's events no longer need
+// to have check() callbacks. Removing the check() callbacks is important
+// to break circular references between the condition and untriggered events.
+func (c *Condition) removeCheckCallbacks() {
+	// TODO: Implement me
+	/*
+	   for event in self._events:
+	       if event.callbacks and self._check in event.callbacks:
+	           event.callbacks.remove(self._check)
+	       if isinstance(event, Condition):
+	           event._remove_check_callbacks()
+
+	*/
 }
