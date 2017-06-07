@@ -30,13 +30,14 @@ now=20, value=41
 now=30, value=42
 */
 
-func example(env *simgo.Environment, pc *simgo.ProcComm) {
+func example(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 	for i := 0; i < 3; i++ {
 		to := simgo.NewTimeout(env, 10, 40+i)
 		to.Schedule(env)
 		val := pc.Yield(to.Event)
 		fmt.Printf("now=%d, value=%d\n", env.Now, val)
 	}
+	return nil
 }
 
 func main() {

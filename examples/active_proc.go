@@ -36,7 +36,7 @@ func subfunc(env *simgo.Environment) {
 	fmt.Printf("%p\n", env.ActiveProcess)
 }
 
-func myProc(env *simgo.Environment, pc *simgo.ProcComm) {
+func myProc(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 	for {
 		fmt.Printf("%p\n", env.ActiveProcess)
 		subfunc(env)
@@ -44,6 +44,7 @@ func myProc(env *simgo.Environment, pc *simgo.ProcComm) {
 		to.Schedule(env)
 		pc.Yield(to.Event)
 	}
+	return nil
 }
 
 func main() {
