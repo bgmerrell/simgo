@@ -189,7 +189,9 @@ func (p *Process) resume(event *Event) {
 	for {
 		// event value is already triggered, no need to check err
 		eventVal, _ := event.Value.Get()
-		if nextEvent, ok := p.pc.Resume(eventVal); !ok {
+		if nextEvent, ok := p.pc.Resume(eventVal); ok {
+			event = nextEvent
+		} else {
 			// Set the process value to nil if it hasn't been set
 			// already.
 			if p.Event.Value.isPending {
@@ -197,8 +199,6 @@ func (p *Process) resume(event *Event) {
 			}
 			p.env.Schedule(p.Event, PriorityNormal, 0)
 			break
-		} else {
-			event = nextEvent
 		}
 
 		if event.callbacks != nil {
