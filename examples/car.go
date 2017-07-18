@@ -18,11 +18,10 @@ def car(env):
         trip_duration = 2
         yield env.timeout(trip_duration)
 
->>> import simpy
->>> env = simpy.Environment()
->>> env.process(car(env))
-<Process(car) object at 0x...>
->>> env.run(until=15)
+import simpy
+env = simpy.Environment()
+env.process(car(env))
+env.run(until=15)
 */
 
 // Output:
