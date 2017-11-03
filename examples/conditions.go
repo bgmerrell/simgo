@@ -31,6 +31,8 @@ t1 and t2 finished
 */
 
 func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
+
+	// AnyOf() example
 	t1 := simgo.NewTimeout(env, 1, "spam")
 	t2 := simgo.NewTimeout(env, 2, "eggs")
 	t1.Schedule(env)
@@ -40,19 +42,45 @@ func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 	condition := simgo.AnyOf(env, events)
 	r := pc.Yield(condition.Event).(simgo.ConditionValue)
 	if len(r) != 1 {
-		log.Fatalf("len(r) = %d, want: %d\n", len(r), 0)
+		log.Fatalf("len(r) = %d, want: %d\n", len(r), 1)
 	}
 	val, err := r[0].(*simgo.EventValue).Get()
-	fmt.Printf("val: %#v\n", val)
-	fmt.Printf("err: %#v\n", err)
-	if val != "spam" {
-		log.Fatalf("val = %s, want: spam", val)
-	}
+	fmt.Printf("AnyOf val #1: %#v\n", val)
 	if err != nil {
 		log.Fatalf("err = %s, want: nil", err)
 	}
+	if val != "spam" {
+		log.Fatalf("val = %s, want: spam", val)
+	}
 
-	// TODO: Include example for `simgo.AllOf`
+	// AllOf() example
+	t1 = simgo.NewTimeout(env, 1, "spam")
+	t2 = simgo.NewTimeout(env, 2, "eggs")
+	t1.Schedule(env)
+	t2.Schedule(env)
+
+	events = []*simgo.Event{t1.Event, t2.Event}
+	condition = simgo.AllOf(env, events)
+	r = pc.Yield(condition.Event).(simgo.ConditionValue)
+	if len(r) != 2 {
+		log.Fatalf("len(r) = %d, want: %d\n", len(r), 2)
+	}
+	val, err = r[0].(*simgo.EventValue).Get()
+	fmt.Printf("AllOf() val #1: %#v\n", val)
+	if err != nil {
+		log.Fatalf("err = %s, want: nil", err)
+	}
+	if val != "spam" {
+		log.Fatalf("val = %s, want: spam", val)
+	}
+	val, err = r[1].(*simgo.EventValue).Get()
+	fmt.Printf("AllOfval val #2: %#v\n", val)
+	if err != nil {
+		log.Fatalf("err = %s, want: nil", err)
+	}
+	if val != "eggs" {
+		log.Fatalf("val = %s, want: eggs", val)
+	}
 
 	return nil
 }

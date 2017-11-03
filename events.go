@@ -354,7 +354,13 @@ func (c *Condition) removeCheckCallbacks() {
 	}
 }
 
-// TODO: Implement AllOf()
+func AllOf(env *Environment, events []*Event) *Condition {
+	var evalFn conditionEvaluateFn = func(events []*Event, count int) bool {
+		return len(events) == count
+	}
+
+	return NewCondition(env, evalFn, events)
+}
 
 func AnyOf(env *Environment, events []*Event) *Condition {
 	var evalFn conditionEvaluateFn = func(events []*Event, count int) bool {
