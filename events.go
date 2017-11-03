@@ -1,6 +1,10 @@
 package simgo
 
 import (
+	"reflect"
+	"runtime"
+	"strings"
+
 	"github.com/juju/errgo"
 )
 
@@ -11,7 +15,10 @@ const (
 )
 
 // conditionEvaluateFn is the evaluate function signature used for conditions
-type conditionEvaluateFn func(events []*Event, count int) bool
+type (
+	conditionEvaluateFn func(events []*Event, count int) bool
+	ConditionValue      []interface{}
+)
 
 // TODO: Move EventValue to its own package or refactor.  Currently, it's too
 // easy to use the struct fields directly when the methods should really be
@@ -33,6 +40,16 @@ func NewEventValue() *EventValue {
 func (ev *EventValue) Set(value interface{}) {
 	ev.val = value
 	ev.isPending = false
+}
+
+// Add adds an underlying value to a map (and initializes the map and sets
+// isPending accordingly).
+func (ev *EventValue) Add(event *Event) {
+	if ev.val == nil {
+		ev.val = ConditionValue{event.Value}
+	} else {
+		ev.val = append(ev.val.(ConditionValue), event.Value)
+	}
 }
 
 // Get returns the underlying event value along with an error if the value is
@@ -258,7 +275,7 @@ func NewCondition(env *Environment, evaluateFn conditionEvaluateFn, events []*Ev
 	c := &Condition{
 		NewEvent(env),
 		evaluateFn,
-		make([]*Event, 0),
+		events,
 		0,
 	}
 
@@ -290,11 +307,14 @@ func (c *Condition) check(event *Event) {
 
 	c.count++
 
-	if !c.Event.isOK() {
+	if !event.isOK() {
 		// TODO: Use "Defused?"
 		// c.Event.Defused = true
-		c.Event.Fail(c.Event.Value)
+		c.Event.Fail(event.Value)
 	} else if c.evaluateFn(c.events, c.count) {
+		// The condition has been met. The buildValue() callback will
+		// populate the ConditionValue once this condition is
+		// processed.
 		c.Event.Succeed(nil)
 	}
 }
@@ -302,10 +322,13 @@ func (c *Condition) check(event *Event) {
 func (c *Condition) buildValue(event *Event) {
 	c.removeCheckCallbacks()
 	if c.Event.isOK() {
-		// TODO: Set and populate the event value to a ConditionValue
-		// simpy:
-		//   self._value = ConditionValue()
-		//   self._populate_value(self._value)
+		// TODO: Does this support nested conditions?  If not, we need
+		// to support that.
+		for _, event := range c.events {
+			if event.callbacks == nil {
+				c.Event.Value.Add(event)
+			}
+		}
 	}
 }
 
@@ -315,13 +338,28 @@ func (c *Condition) buildValue(event *Event) {
 // to have check() callbacks. Removing the check() callbacks is important
 // to break circular references between the condition and untriggered events.
 func (c *Condition) removeCheckCallbacks() {
-	// TODO: Implement me
-	/*
-	   for event in self._events:
-	       if event.callbacks and self._check in event.callbacks:
-	           event.callbacks.remove(self._check)
-	       if isinstance(event, Condition):
-	           event._remove_check_callbacks()
+	for _, event := range c.events {
+		for i, callback := range event.callbacks {
+			// TODO: this is ghetto, do this without the lame
+			// function name check
+			callbackName := runtime.FuncForPC(
+				reflect.ValueOf(callback).Pointer()).Name()
+			if strings.HasSuffix(callbackName, "simgo.check)-fm") {
+				event.callbacks = append(
+					event.callbacks[:i],
+					event.callbacks[i+1:]...)
+				break
+			}
+		}
+	}
+}
 
-	*/
+// TODO: Implement AllOf()
+
+func AnyOf(env *Environment, events []*Event) *Condition {
+	var evalFn conditionEvaluateFn = func(events []*Event, count int) bool {
+		return count > 0 || len(events) == 0
+	}
+
+	return NewCondition(env, evalFn, events)
 }
