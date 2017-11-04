@@ -9,7 +9,7 @@ import (
 /*
 import simpy
 
-def test_condition(env):
+def example_conditions(env):
     t1, t2 = env.timeout(1, value='spam'), env.timeout(2, value='eggs')
     ret = yield t1 | t2
     assert ret == {t1: 'spam'}
@@ -20,7 +20,7 @@ def test_condition(env):
     assert ret == {t1: 'spam', t2: 'eggs'}
     print("t1 and t2 finished")
 
-proc = env.process(test_condition(env))
+proc = env.process(example_conditions(env))
 env.run()
 */
 
@@ -30,7 +30,7 @@ t1 finished
 t1 and t2 finished
 */
 
-func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
+func exampleConditions(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 
 	// AnyOf() example
 	t1 := simgo.NewTimeout(env, 1, "spam")
@@ -45,7 +45,7 @@ func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 		log.Fatalf("len(r) = %d, want: %d\n", len(r), 1)
 	}
 	val, err := r[0].(*simgo.EventValue).Get()
-	fmt.Printf("AnyOf val #1: %#v\n", val)
+	fmt.Printf("AnyOf() val #1: %#v\n", val)
 	if err != nil {
 		log.Fatalf("err = %s, want: nil", err)
 	}
@@ -74,7 +74,7 @@ func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 		log.Fatalf("val = %s, want: spam", val)
 	}
 	val, err = r[1].(*simgo.EventValue).Get()
-	fmt.Printf("AllOfval val #2: %#v\n", val)
+	fmt.Printf("AllOf() val #2: %#v\n", val)
 	if err != nil {
 		log.Fatalf("err = %s, want: nil", err)
 	}
@@ -87,7 +87,7 @@ func testCondition(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 
 func main() {
 	env := simgo.NewEnvironment()
-	p := simgo.NewProcess(env, simgo.ProcWrapper(env, testCondition))
+	p := simgo.NewProcess(env, simgo.ProcWrapper(env, exampleConditions))
 	p.Init()
 	_, err := env.Run(nil)
 	if err != nil {

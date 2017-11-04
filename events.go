@@ -44,11 +44,11 @@ func (ev *EventValue) Set(value interface{}) {
 
 // Add adds an underlying value to a map (and initializes the map and sets
 // isPending accordingly).
-func (ev *EventValue) Add(event *Event) {
+func (ev *EventValue) Add(eventValue *EventValue) {
 	if ev.val == nil {
-		ev.val = ConditionValue{event.Value}
+		ev.val = ConditionValue{eventValue}
 	} else {
-		ev.val = append(ev.val.(ConditionValue), event.Value)
+		ev.val = append(ev.val.(ConditionValue), eventValue)
 	}
 }
 
@@ -321,13 +321,20 @@ func (c *Condition) check(event *Event) {
 
 func (c *Condition) buildValue(event *Event) {
 	c.removeCheckCallbacks()
-	if c.Event.isOK() {
-		// TODO: Does this support nested conditions?  If not, we need
-		// to support that.
-		for _, event := range c.events {
-			if event.callbacks == nil {
-				c.Event.Value.Add(event)
+	if !c.Event.isOK() {
+		return
+	}
+	for _, event := range c.events {
+		if event.callbacks != nil {
+			// Event has not yet been processed
+			continue
+		}
+		if _, ok := event.Value.val.(ConditionValue); ok {
+			for _, val := range event.Value.val.(ConditionValue) {
+				c.Event.Value.Add(val.(*EventValue))
 			}
+		} else {
+			c.Event.Value.Add(event.Value)
 		}
 	}
 }
