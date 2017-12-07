@@ -93,23 +93,17 @@ func (env *Environment) Run(until interface{}) (interface{}, error) {
 
 // Step processes the next event.
 func (env *Environment) Step() {
-	var eqItem *eventQueueItem
-	switch item := heap.Pop(&env.queue).(type) {
-	case nil:
+	item := heap.Pop(&env.queue)
+	if item == nil {
 		// We're out of event queue items
 		env.shouldStop = true
 		return
-	case *eventQueueItem:
-		eqItem = item
-	default:
-		// Should never happen
-		panic("Unknown type from event queue")
 	}
+	eqItem := item.(*eventQueueItem)
 	env.Now = eqItem.time
 
 	// Process the event callbacks
-	callbacks := make([]func(*Event), len(eqItem.callbacks))
-	copy(callbacks, eqItem.callbacks)
+	callbacks := eqItem.callbacks
 	eqItem.callbacks = nil
 	for _, callback := range callbacks {
 		callback(eqItem.Event)
