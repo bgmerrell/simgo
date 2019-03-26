@@ -68,12 +68,12 @@ func (c *Car) run(env *simgo.Environment, pc *simgo.ProcComm) interface{} {
 	for {
 		fmt.Printf("Start parking and charging at %d\n", env.Now)
 
-		to := simgo.NewTimeout(env, charge_duration, nil)
-		to.Schedule(env)
-		pc.Yield(to.Event)
+		chargeProc := simgo.NewProcess(env, simgo.ProcWrapper(env, c.charge))
+		chargeProc.Init()
+		pc.Yield(chargeProc.Event)
 
 		fmt.Printf("Start driving at %d\n", env.Now)
-		to = simgo.NewTimeout(env, trip_duration, nil)
+		to := simgo.NewTimeout(env, trip_duration, nil)
 		to.Schedule(env)
 		pc.Yield(to.Event)
 	}
